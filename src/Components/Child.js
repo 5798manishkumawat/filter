@@ -1,9 +1,12 @@
 import React, { useState } from "react";
+import MOCK_DATA from "./MOCK_DATA.json";
 import "./table.css";
 
-function Child({ id, value, data }) {
-	console.log("child", id, value);
-	const [filtered, setfiltered] = useState([]);
+function Child(props) {
+	const [document, setDocument] = useState([]);
+	const [res, setRes] = useState([]);
+
+	const data = MOCK_DATA;
 	const columns = [
 		"Name",
 		"ScreeName",
@@ -13,46 +16,47 @@ function Child({ id, value, data }) {
 		"Verified",
 	];
 
+	//    console.log("filteredData",filteredData)
 	React.useEffect(() => {
+		const res = [];
 		// eslint-disable-next-line array-callback-return
-		let filteredData = data;
-		switch (id) {
-			case "name":
-				filteredData = data.filter((user) => {
-					return user.name.toLowerCase() === value?.toLowerCase();
-				});
-				break;
-			case "sname":
-				filteredData = data.filter((user) => {
-					return user.same.toLowerCase() === value?.toLowerCase();
-				});
-				break;
-			case "followers":
-				filteredData = data.filter((user) => {
-					return user.followers >= value;
-				});
-				break;
-			case "following":
-				filteredData = data.filter((user) => {
-					return user.following >= value;
-				});
-				break;
-			case "location":
-				filteredData = data.filter((user) => {
-					return user.location === value;
-				});
-				break;
-			case "verified":
-				filteredData = data.filter((user) => {
-					if (value === "0") return user.verified === false;
-					else return user.verified === true;
-				});
-				break;
-			default:
-				setfiltered(data);
-		}
-		setfiltered(filteredData);
-	}, [data, id, value]);
+		const filteredData = data.filter((item) => {
+			var val = true;
+			props.con.forEach((doc) => {
+				if (doc.id === "followers") {
+					if (doc.operator === "GTE") {
+						if (item.followers >= doc.filter && val) val = true;
+						else val = false;
+					} else if (doc.operator === "LTE") {
+						if (item.followers <= doc.filter && val) val = true;
+						else val = false;
+					}
+				}
+				if (doc.id === "location") {
+					if (item.location.includes(doc.filter) && val) val = true;
+					else val = false;
+				}
+				if (doc.id === "verified") {
+					if (
+						item.verified === (doc.filter === "verified" ? true : false) &&
+						val
+					) {
+						val = true;
+						// console.log(
+						// 	item.verified === Boolean(doc.filter),
+						// 	item.verified,
+						// 	doc.filter,
+						// 	item
+						// );
+					} else val = false;
+				}
+			});
+			if (val) res.push(item);
+		});
+
+		setRes(res);
+		setDocument(filteredData);
+	}, [document, data, props.con]);
 
 	return (
 		<div>
@@ -64,20 +68,16 @@ function Child({ id, value, data }) {
 				</thead>
 
 				<tbody>
-					{!value ? (
-						<h1>Please Enter a Value to Use Filter </h1>
-					) : (
-						filtered.map((user) => (
-							<tr>
-								<td>{user.name}</td>
-								<td>{user.sname}</td>
-								<td>{user.followers}</td>
-								<td>{user.following}</td>
-								<td>{user.location}</td>
-								<td>{user.verified === true ? <p>True</p> : <p>False</p>}</td>
-							</tr>
-						))
-					)}
+					{res.map((user) => (
+						<tr>
+							<td>{user.name}</td>
+							<td>{user.sname}</td>
+							<td>{user.followers}</td>
+							<td>{user.following}</td>
+							<td>{user.location}</td>
+							<td>{user.verified === true ? "Verified" : "Not Verified"}</td>
+						</tr>
+					))}
 				</tbody>
 			</table>
 		</div>
